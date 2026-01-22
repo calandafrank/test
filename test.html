@@ -1,262 +1,154 @@
-<!DOCTYPE html>
-<html lang="zh-Hant-TW" data-react-helmet="lang">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no user-scalable=0">
-    <title>QR Code Redirect</title>
-    <meta name="description" content="QR Code to Message">
-    <meta property="og:title" content="QR Code Redirect">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="https://scrm.oakmega.site/0/icon/logo-512.png">
-    <meta property="og:url" content="https://urli.ai">
-    <meta property="og:description" content="QR Code to Message">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>凝聚｜2026 感謝祭｜回饋表單</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-    <meta name="twitter:card" content="">
-    <meta name="twitter:image" content="https://scrm.oakmega.site/0/icon/logo-512.png">
-    <meta name="twitter:title" content="QR Code Redirect">
-    <meta name="twitter:description" content="QR Code to Message">
+  <style>
+    /* 模仿 linked.tw 的簡潔設計 */
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #ffffff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     
-    <link rel="icon" type="image/x-icon" href="https://scrm.oakmega.site/0/icon/logo.ico"/>
+    /* 容器 */
+    .container { width: 100%; max-width: 480px; padding: 20px; box-sizing: border-box; }
 
-    <script src="https://storage.googleapis.com/urli/static/js/vue.min.js"></script>
+    /* 大頭貼/Icon 區域 (模仿 linked.tw 的圓形圖) */
+    .profile-icon {
+      width: 120px; height: 120px; background: #06c755; border-radius: 50%; margin: 0 auto 30px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 20px rgba(6, 199, 85, 0.2);
+    }
+    .profile-icon svg { width: 60px; height: 60px; fill: white; }
 
+    /* 標題與說明 */
+    h1 { font-size: 22px; color: #333; margin-bottom: 10px; }
+    p { font-size: 14px; color: #666; margin-bottom: 40px; line-height: 1.6; }
+
+    /* 主要按鈕 (模仿 linked.tw 的 Go 按鈕) */
+    .btn-main {
+      display: block; width: 100%; padding: 16px 0;
+      background-color: #06c755; color: white;
+      border-radius: 50px; text-decoration: none; font-size: 18px; font-weight: bold;
+      box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
+      cursor: pointer; border: none; outline: none;
+      transition: opacity 0.2s;
+    }
+    .btn-main:active { opacity: 0.8; transform: scale(0.98); }
+    
+    /* 載入中狀態 */
+    .btn-main.loading { background-color: #ccc; pointer-events: none; box-shadow: none; }
+
+    /* iframe 滿版顯示 */
+    #filloutFrame {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      border: none; background: #fff; z-index: 999; display: none;
+    }
+
+    /* 隱藏元素 */
+    .hidden { display: none !important; }
+  </style>
 </head>
-<style>
-html,
-body {
-  height: 100%;
-  background-color: #ffffff;
-}
-
-body {
-  -ms-flex-align: center;
-  align-items: center;
-  background-color: #ffffff;
-  margin: 0 auto;
-  position: relative;
-  text-align: center;
-}
-
-#app {
-  background-color: #ffffff;
-  position: relative;
-}
-
-#profile {
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  border-radius: 50%;
-  height: 300px;
-  width: 300px;
-  margin: 50px auto;
-  cursor: pointer;
-  background-color: #efefef;
-}
-
-#go {
-  background-color: #efefef;
-  /*background-color: #16C309;*/
-  border-radius: 5px;
-  color: #ffffff;
-  line-height: 40px;
-  height: 40px;
-  width: 200px;
-  margin: auto;
-  cursor: pointer;
-}
-
-#go:hover {
-  opacity: 0.8;
-}
-
-#footer {
-  position: fixed;
-  bottom: 20px;
-  text-align: center;
-  width: 100%;
-  text-align: center;
-  font-size: 14px;
-  background-color: #ffffff;
-}
-
-#footer a:link {
-  text-decoration: none;
-  color: #179cde;
-}
-
-#footer a:visited {
-  text-decoration: none;
-  color: #179cde;
-}
-
-#footer a:hover {
-  text-decoration: none;
-  color: #179cde;
-}
-
-
-
-pre {
-  font-size: 1rem;
-  white-space: pre-wrap;       /* Since CSS 2.1 */
-  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-  white-space: -pre-wrap;      /* Opera 4-6 */
-  white-space: -o-pre-wrap;    /* Opera 7 */
-  word-wrap: break-word;
-}
-
-
-
-@media only screen and (max-width: 600px) {
-  #profile {
-    height: 250px;
-    width: 250px;
-  }
-}
-
-.blink {
-  -webkit-animation: blink-2 1.5s infinite both;
-          animation: blink-2 1.5s infinite both;
-}
-
-
-@-webkit-keyframes blink-2 {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.2;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-@keyframes blink-2 {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.2;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-</style>
-
 <body>
-  <div id="app">
-    <div id="profile" :class="{ blink: loading }" :style="{backgroundImage:`url(${photo_url})`}" @click="redirect">
+
+  <div id="landingPage" class="container">
+    <div class="profile-icon">
+      <svg viewBox="0 0 24 24"><path d="M21.6 11.2c0-4.6-4.3-8.4-9.6-8.4S2.4 6.6 2.4 11.2c0 4.1 3.6 7.6 8.4 8.2v0.1l-1.2 3.8c-0.1 0.4 0.2 0.7 0.5 0.7 0.2 0 0.3-0.1 0.4-0.1l4.9-3.4h0.1c3.5-0.6 6.1-4.1 6.1-8.3z"/></svg>
     </div>
-    <div :class="{ blink: loading }" :style="bg" id="go"  @click="redirect">{{ goText }}</div>
+    
+    <h1>感謝祭回饋表單</h1>
+    <p>為了確保您的會員權益，<br>系統將會自動帶入您的 LINE 資料。</p>
+
+    <button id="actionBtn" class="btn-main loading">資料讀取中...</button>
   </div>
-  <div id="footer">Created via <a href="https://oakmega.com">OakMega</a></div>
-</body>
-<script>
-var app = new Vue({
-    el : "#app",
-    data : function(){
-      return {
-        jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdWlkIjoiVTQ3NjBlZDdmN2FiNTcyYWM1OWFhZjE3Nzc4YmI1YmQzIiwiYmlkIjoyMDMsInNvY2lhbF9tZWRpYV9tZW1iZXJfdW5pcXVlX2lkIjoiVTQ3NjBlZDdmN2FiNTcyYWM1OWFhZjE3Nzc4YmI1YmQzIiwiYWNjb3VudF9pZCI6MjAzLCJhY2Nlc3NfdG9rZW4iOiJleUpoYkdjaU9pSklVekkxTmlKOS5ybGlfeVZGOEZnM2o1Y2g4YTNlcTFGaUdkRTRqQW83OEE5cEFkN09FTnVPcDJpUDFiamVQTFhIdF9vb2lvXzNwem54dVNmSzJGek4tc1J4d29yYV9rWmVsMy1xTDNMRDY0aW1hcHFGdlVHYUY2V3pGWmZCb1Z5NFdOazVHNk1nNHZwSjVubHZyRXFOSjZLQV82ZkhEdFM1NkdycGxmVGM3MW0zNmJNN21idGcuT3paT05YeXl1VjdxSmZFVmhCeWU5TjFTYmc0Z3RaYW1WbHJ1cGN0cEgwcyIsInNvdXJjZSI6IkxJTkUifQ.crSEu2MqmHdTf0CiBM4asErthIwZ_UwJI-5BFWlGigw',
-        redirect_uuid: 'bot-j1p85',
-        domainUrl: 'https://module.oakmega.ai',
-        photo_url: '',
-        line_id: '',
-        goText: '',
-        loading: true,
-        bg: {
-          backgroundColor: "#efefef" 
+
+  <iframe id="filloutFrame" title="Fillout 表單"></iframe>
+
+  <script>
+    /***** 設定區域 *****/
+    const LIFF_ID = "2001467446-5e8NpLdt";
+    const FILL_OUT_BASE_URL = "https://cicostudio.fillout.com/t/6daWfoG9sJus?userid=xxxxx";
+    /********************************/
+
+    const landingPage = document.getElementById('landingPage');
+    const actionBtn = document.getElementById('actionBtn');
+    const iframe = document.getElementById('filloutFrame');
+
+    function showForm(userId) {
+      // 隱藏 Landing Page，顯示 Iframe
+      landingPage.style.display = 'none';
+      const url = new URL(FILL_OUT_BASE_URL);
+      if(userId) url.searchParams.set('userid', userId);
+      iframe.src = url.toString();
+      iframe.style.display = 'block';
+    }
+
+    // 設置按鈕狀態
+    function setButtonState(text, onClickHandler) {
+      actionBtn.innerText = text;
+      actionBtn.classList.remove('loading');
+      actionBtn.onclick = onClickHandler;
+    }
+
+    async function main() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+
+        // 情況 A：已經登入 (在 LINE App 內，或是在 Web 已經授權過)
+        if (liff.isLoggedIn()) {
+          actionBtn.innerText = "驗證成功，正在跳轉...";
+          const profile = await liff.getProfile();
+          showForm(profile.userId); // 直接顯示表單，解決迴圈問題
+          return;
         }
-      }
-    },
-    created () {
-      const userLang = navigator.language || navigator.userLanguage
-      if (userLang.includes("zh")){
-        this.goText = "前往官方帳號"
-      } else if (userLang.includes("ja")){
-        this.goText = "LINE公式アカウント"
-      } else if (userLang.includes("th")){
-        this.goText = "กำลังเชื่อมต่อกับ LINE OA"
-      } else {
-        this.goText = "Go to LINE OA"
-      }
-      const urlString = window.location.href
-      const url = new URL(urlString)
-      const sent = url.searchParams.get("sent")
-      if (!sent) {
-        if (this.redirect_uuid.slice(0,4) == "tag-" || this.redirect_uuid.slice(0,4) == "bot-") {
-          this.fetchNewServer()
+
+        // 情況 B：未登入 (在外部瀏覽器，且尚未授權)
+        // 這時候我們顯示按鈕，讓使用者點擊，或嘗試自動跳轉
+        
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // 定義登入動作
+        const doLogin = () => {
+            // 使用 redirect 模式登入，這會跳轉去 LINE Login 頁面
+            // 登入成功後，會自動跳回這個頁面，並進入「情況 A」
+            liff.login({ redirectUri: window.location.href });
+        };
+
+        if (isMobile) {
+            // 手機版：設定按鈕功能
+            setButtonState("點此開始填寫", doLogin);
+            
+            // 嘗試自動執行一次 (Auto-Redirect)
+            // 為了避免某些瀏覽器阻擋，我們只在第一次嘗試
+            if (!sessionStorage.getItem('auto_redirect_tried')) {
+                sessionStorage.setItem('auto_redirect_tried', '1');
+                doLogin(); 
+            }
+            // 如果自動跳轉被擋（例如卡在頁面上），使用者現在會看到「點此開始填寫」按鈕
+            // 點擊後會再次觸發 doLogin()，這次是使用者主動觸發，瀏覽器不會擋。
         } else {
-          this.fetchOldServer()
+            // 電腦版：顯示 QR Code 或提示
+            setButtonState("請使用手機 LINE 開啟", () => {
+                // 電腦版點擊也可以嘗試登入 web 版
+                doLogin();
+            });
+            // 這裡可以選擇是否要像 linked.tw 一樣彈出 QR Code
+            // 簡單起見，直接讓電腦版也能 Web Login 填寫
         }
-      }
-    },
-    methods : {
-      changeUrl() {
-        let currentUrl = window.location.href
-        let url = new URL(currentUrl)
-        url.searchParams.set('sent', '1')
-        window.history.replaceState(null, '', url.toString())
-      },
-      fetchOldServer() {
-        fetch(`${this.domainUrl}/api/v2/qrcode-redirect/old/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.jwt}`
-          },
-          body: JSON.stringify({message_uuid: this.redirect_uuid}),
-        })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Success:', data)
-          this.changeUrl()
-          this.line_id = data.line_id
-          this.photo_url = data.photo_url
-          this.loading = false
-          this.bg.backgroundColor = "#16C309"
-          if (this.line_id != ""){
-            window.location.replace(`https://line.me/R/ti/p/${this.line_id}`)
-          }
-        })
-        .catch((error) => {
-          console.error('Error:', error)
-        })
-      },
-      fetchNewServer() {
-        fetch(`${this.domainUrl}/api/v2/qrcode-redirect`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.jwt}`
-          },
-          body: JSON.stringify({redirect_uuid: this.redirect_uuid}),
-        })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Success:', data)
-          this.changeUrl()
-          this.line_id = data.line_id
-          this.photo_url = data.photo_url
-          this.loading = false
-          this.bg.backgroundColor = "#16C309"
-          if (this.line_id != ""){
-            window.location.replace(`https://line.me/R/ti/p/${this.line_id}`)
-          }
-        })
-        .catch((error) => {
-          console.error('Error:', error)
-        })
-      },
-      redirect() {
-        if (this.line_id != ""){
-          window.location.replace(`https://line.me/R/ti/p/${this.line_id}`)
-        }
+
+      } catch (err) {
+        console.error('LIFF Init Failed', err);
+        // 初始化失敗 (例如網路問題)，提供降級方案：直接開表單 (無 UserID)
+        setButtonState("開始填寫 (無須登入)", () => {
+             // 直接顯示原始表單
+             landingPage.style.display = 'none';
+             iframe.src = FILL_OUT_BASE_URL;
+             iframe.style.display = 'block';
+        });
       }
     }
-});
 
-</script>
+    main();
+  </script>
+</body>
 </html>
