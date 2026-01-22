@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW" data-react-helmet="lang">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no user-scalable=0">
+    <title>QR Code Redirect</title>
+    <meta name="description" content="QR Code to Message">
+    <meta property="og:title" content="QR Code Redirect">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://scrm.oakmega.site/0/icon/logo-512.png">
+    <meta property="og:url" content="https://urli.ai">
+    <meta property="og:description" content="QR Code to Message">
+
+    <meta name="twitter:card" content="">
+    <meta name="twitter:image" content="https://scrm.oakmega.site/0/icon/logo-512.png">
+    <meta name="twitter:title" content="QR Code Redirect">
+    <meta name="twitter:description" content="QR Code to Message">
+    
+    <link rel="icon" type="image/x-icon" href="https://scrm.oakmega.site/0/icon/logo.ico"/>
+
+    <script src="https://storage.googleapis.com/urli/static/js/vue.min.js"></script>
+
+</head>
+<style>
+html,
+body {
+  height: 100%;
+  background-color: #ffffff;
+}
+
+body {
+  -ms-flex-align: center;
+  align-items: center;
+  background-color: #ffffff;
+  margin: 0 auto;
+  position: relative;
+  text-align: center;
+}
+
+#app {
+  background-color: #ffffff;
+  position: relative;
+}
+
+#profile {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 50%;
+  height: 300px;
+  width: 300px;
+  margin: 50px auto;
+  cursor: pointer;
+  background-color: #efefef;
+}
+
+#go {
+  background-color: #efefef;
+  /*background-color: #16C309;*/
+  border-radius: 5px;
+  color: #ffffff;
+  line-height: 40px;
+  height: 40px;
+  width: 200px;
+  margin: auto;
+  cursor: pointer;
+}
+
+#go:hover {
+  opacity: 0.8;
+}
+
+#footer {
+  position: fixed;
+  bottom: 20px;
+  text-align: center;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  background-color: #ffffff;
+}
+
+#footer a:link {
+  text-decoration: none;
+  color: #179cde;
+}
+
+#footer a:visited {
+  text-decoration: none;
+  color: #179cde;
+}
+
+#footer a:hover {
+  text-decoration: none;
+  color: #179cde;
+}
+
+
+
+pre {
+  font-size: 1rem;
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;
+}
+
+
+
+@media only screen and (max-width: 600px) {
+  #profile {
+    height: 250px;
+    width: 250px;
+  }
+}
+
+.blink {
+  -webkit-animation: blink-2 1.5s infinite both;
+          animation: blink-2 1.5s infinite both;
+}
+
+
+@-webkit-keyframes blink-2 {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes blink-2 {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+</style>
+
+<body>
+  <div id="app">
+    <div id="profile" :class="{ blink: loading }" :style="{backgroundImage:`url(${photo_url})`}" @click="redirect">
+    </div>
+    <div :class="{ blink: loading }" :style="bg" id="go"  @click="redirect">{{ goText }}</div>
+  </div>
+  <div id="footer">Created via <a href="https://oakmega.com">OakMega</a></div>
+</body>
+<script>
+var app = new Vue({
+    el : "#app",
+    data : function(){
+      return {
+        jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdWlkIjoiVTQ3NjBlZDdmN2FiNTcyYWM1OWFhZjE3Nzc4YmI1YmQzIiwiYmlkIjoyMDMsInNvY2lhbF9tZWRpYV9tZW1iZXJfdW5pcXVlX2lkIjoiVTQ3NjBlZDdmN2FiNTcyYWM1OWFhZjE3Nzc4YmI1YmQzIiwiYWNjb3VudF9pZCI6MjAzLCJhY2Nlc3NfdG9rZW4iOiJleUpoYkdjaU9pSklVekkxTmlKOS5ybGlfeVZGOEZnM2o1Y2g4YTNlcTFGaUdkRTRqQW83OEE5cEFkN09FTnVPcDJpUDFiamVQTFhIdF9vb2lvXzNwem54dVNmSzJGek4tc1J4d29yYV9rWmVsMy1xTDNMRDY0aW1hcHFGdlVHYUY2V3pGWmZCb1Z5NFdOazVHNk1nNHZwSjVubHZyRXFOSjZLQV82ZkhEdFM1NkdycGxmVGM3MW0zNmJNN21idGcuT3paT05YeXl1VjdxSmZFVmhCeWU5TjFTYmc0Z3RaYW1WbHJ1cGN0cEgwcyIsInNvdXJjZSI6IkxJTkUifQ.crSEu2MqmHdTf0CiBM4asErthIwZ_UwJI-5BFWlGigw',
+        redirect_uuid: 'bot-j1p85',
+        domainUrl: 'https://module.oakmega.ai',
+        photo_url: '',
+        line_id: '',
+        goText: '',
+        loading: true,
+        bg: {
+          backgroundColor: "#efefef" 
+        }
+      }
+    },
+    created () {
+      const userLang = navigator.language || navigator.userLanguage
+      if (userLang.includes("zh")){
+        this.goText = "前往官方帳號"
+      } else if (userLang.includes("ja")){
+        this.goText = "LINE公式アカウント"
+      } else if (userLang.includes("th")){
+        this.goText = "กำลังเชื่อมต่อกับ LINE OA"
+      } else {
+        this.goText = "Go to LINE OA"
+      }
+      const urlString = window.location.href
+      const url = new URL(urlString)
+      const sent = url.searchParams.get("sent")
+      if (!sent) {
+        if (this.redirect_uuid.slice(0,4) == "tag-" || this.redirect_uuid.slice(0,4) == "bot-") {
+          this.fetchNewServer()
+        } else {
+          this.fetchOldServer()
+        }
+      }
+    },
+    methods : {
+      changeUrl() {
+        let currentUrl = window.location.href
+        let url = new URL(currentUrl)
+        url.searchParams.set('sent', '1')
+        window.history.replaceState(null, '', url.toString())
+      },
+      fetchOldServer() {
+        fetch(`${this.domainUrl}/api/v2/qrcode-redirect/old/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.jwt}`
+          },
+          body: JSON.stringify({message_uuid: this.redirect_uuid}),
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Success:', data)
+          this.changeUrl()
+          this.line_id = data.line_id
+          this.photo_url = data.photo_url
+          this.loading = false
+          this.bg.backgroundColor = "#16C309"
+          if (this.line_id != ""){
+            window.location.replace(`https://line.me/R/ti/p/${this.line_id}`)
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error)
+        })
+      },
+      fetchNewServer() {
+        fetch(`${this.domainUrl}/api/v2/qrcode-redirect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.jwt}`
+          },
+          body: JSON.stringify({redirect_uuid: this.redirect_uuid}),
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Success:', data)
+          this.changeUrl()
+          this.line_id = data.line_id
+          this.photo_url = data.photo_url
+          this.loading = false
+          this.bg.backgroundColor = "#16C309"
+          if (this.line_id != ""){
+            window.location.replace(`https://line.me/R/ti/p/${this.line_id}`)
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error)
+        })
+      },
+      redirect() {
+        if (this.line_id != ""){
+          window.location.replace(`https://line.me/R/ti/p/${this.line_id}`)
+        }
+      }
+    }
+});
+
+</script>
+</html>
