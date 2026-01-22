@@ -14,7 +14,20 @@
     .container { 
       display: flex; flex-direction: column; align-items: center; justify-content: center; 
       height: 100%; text-align: center; padding: 20px; box-sizing: border-box;
+      /* 關鍵修正：預設隱藏所有容器，由 JS 決定顯示誰 */
+      display: none; 
     }
+
+    /* 載入中畫面 (預設顯示) */
+    #loadingScreen {
+      display: flex; /* 只有這個預設是 flex */
+      color: #64748b; font-size: 14px;
+    }
+    .spinner {
+      width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #06c755; border-radius: 50%;
+      animation: spin 1s linear infinite; margin-bottom: 16px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     /* 圖示與標題 */
     .icon-box {
@@ -38,50 +51,27 @@
     }
     .btn-main:active { opacity: 0.9; transform: scale(0.98); }
 
-    /* 燈箱 (Desktop QR) */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: #f8fafc; z-index: 9999;
-      display: none; /* 預設隱藏 */
-      flex-direction: column; align-items: center; justify-content: center;
-    }
-    .qr-frame {
-      background: #fff; padding: 16px; border-radius: 20px;
-      border: 1px solid #e2e8f0; margin-top: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .qr-frame img { width: 200px; height: 200px; display: block; }
-
     /* 表單 iframe */
     #filloutFrame {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       border: none; background: #fff; z-index: 100; display: none;
     }
-
-    /* 工具類 */
-    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div id="mobileLanding" class="container">
+  <div id="loadingScreen" class="container">
+    <div class="spinner"></div>
+    <div>資料讀取中...</div>
+  </div>
+
+  <div id="loginLanding" class="container">
     <div class="icon-box">
       <svg viewBox="0 0 24 24"><path d="M21.6 11.2c0-4.6-4.3-8.4-9.6-8.4S2.4 6.6 2.4 11.2c0 4.1 3.6 7.6 8.4 8.2v0.1l-1.2 3.8c-0.1 0.4 0.2 0.7 0.5 0.7 0.2 0 0.3-0.1 0.4-0.1l4.9-3.4h0.1c3.5-0.6 6.1-4.1 6.1-8.3z"/></svg>
     </div>
     <h1>感謝祭回饋表單</h1>
-    <p>若無自動跳轉 LINE，請點下方按鈕開啟。</p>
-    <button id="loginBtn" class="btn-main">點我開始填寫</button>
-  </div>
-
-  <div id="desktopModal" class="modal-overlay">
-    <div class="icon-box">
-      <svg viewBox="0 0 24 24"><path d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 13h6v6H3v-6zm2 2v2h2v-2H5zm13-2h3v2h-3v-2zm-3 0h2v2h-2v-2zm3 3h3v3h-3v-3zm-6 0h2v1h1v2h-3v-3zm3 3v3h3v-3h-3z" /></svg>
-    </div>
-    <h1>請使用手機填寫</h1>
-    <p>請開啟手機相機或 LINE App 掃碼</p>
-    <div class="qr-frame">
-      <img id="qrImage" alt="QR Code" />
-    </div>
+    <p>為了確保您的會員權益，<br>請點擊下方按鈕登入 LINE 進行填寫。</p>
+    <button id="loginBtn" class="btn-main">以 LINE 帳號登入</button>
   </div>
 
   <iframe id="filloutFrame" title="表單"></iframe>
@@ -93,70 +83,68 @@
     /********************************/
 
     // 取得 DOM 元素
-    const mobileLanding = document.getElementById('mobileLanding');
-    const desktopModal = document.getElementById('desktopModal');
-    const qrImage = document.getElementById('qrImage');
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loginLanding = document.getElementById('loginLanding');
     const iframe = document.getElementById('filloutFrame');
     const loginBtn = document.getElementById('loginBtn');
 
-    // 判斷裝置
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // 切換顯示狀態的輔助函式
+    function showState(state) {
+      // 先隱藏所有介面
+      loadingScreen.style.display = 'none';
+      loginLanding.style.display = 'none';
+      iframe.style.display = 'none';
 
-    // 顯示表單 (隱藏其他元素)
-    function showForm(userId) {
-      mobileLanding.classList.add('hidden');
-      desktopModal.style.display = 'none';
-      
-      const url = new URL(FILL_OUT_BASE_URL);
-      if(userId) url.searchParams.set('userid', userId);
-      
-      iframe.src = url.toString();
-      iframe.style.display = 'block';
+      // 根據狀態顯示對應介面
+      if (state === 'loading') loadingScreen.style.display = 'flex';
+      if (state === 'landing') loginLanding.style.display = 'flex';
+      if (state === 'form') iframe.style.display = 'block';
     }
 
-    // 執行登入 (解決 400 錯誤的關鍵：正確使用 redirectUri)
+    // 顯示表單 (帶入 UserID)
+    function loadForm(userId) {
+      const url = new URL(FILL_OUT_BASE_URL);
+      if(userId) url.searchParams.set('userid', userId);
+      iframe.src = url.toString();
+      showState('form');
+    }
+
+    // 執行登入
     function triggerLogin() {
       if (!liff.isLoggedIn()) {
-        // 使用 liff.login() 並指定 redirectUri 為當前頁面
-        // 這會跳轉到 LINE 授權頁，結束後自動跳回這裡帶上 Token
+        // 使用 redirectUri 設定為當前頁面，支援桌機與手機的標準 Web Login
         liff.login({ redirectUri: window.location.href });
       }
     }
 
     async function main() {
-      // 1. 電腦版：直接顯示 QR Code，不跑 LIFF init (節省資源)
-      if (!isMobile) {
-        // QR Code 指向：LIFF URL (讓手機掃描後直接打開 LINE 內部瀏覽器)
-        const liffUrl = `https://liff.line.me/${LIFF_ID}`;
-        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(liffUrl)}&size=240x240`;
-        desktopModal.style.display = 'flex';
-        mobileLanding.classList.add('hidden');
-        return; 
-      }
-
-      // 2. 手機版：初始化 LIFF
+      // 1. 初始化 LIFF
       try {
         await liff.init({ liffId: LIFF_ID });
 
-        // 情況 A：已經登入 (LINE 內開啟，或 Web 授權剛回來)
+        // 情況 A：已經登入 
+        // (LINE App 內掃碼開啟、或桌機/手機瀏覽器剛從 LINE Login 回來)
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
-          showForm(profile.userId);
+          loadForm(profile.userId);
           return;
         }
 
-        // 情況 B：未登入 (外部瀏覽器) -> 顯示按鈕
-        // 設定按鈕事件
+        // 情況 B：未登入 (第一次用桌機開啟，或外部瀏覽器未授權)
+        // 隱藏 Loading，顯示「登入按鈕」介面
+        showState('landing');
         loginBtn.onclick = triggerLogin;
 
       } catch (err) {
         console.error('LIFF Init Error:', err);
-        // 如果 LIFF 初始化失敗 (例如網路問題)，降級顯示純表單 (無 UserID)
-        alert("LIFF 載入失敗，將直接開啟表單");
-        showForm(""); 
+        // 如果 LIFF 初始化完全失敗 (網路問題或 ID 錯誤)
+        // 至少讓使用者能看到表單 (雖然沒 ID)
+        alert("系統連線異常，將直接開啟表單");
+        loadForm(""); 
       }
     }
 
+    // 啟動程式
     main();
   </script>
 </body>
