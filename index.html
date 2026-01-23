@@ -88,7 +88,11 @@
 
   <iframe id="filloutFrame" title="表單"></iframe>
 
-  <script>
+<script>
+    /* 【修正 1】破框程式碼：防止 Fillout 在 iframe 內轉址導致卡死 */
+    if (window.self !== window.top) {
+      window.top.location.href = window.location.href;
+    }
     /***** 設定區域 (請務必修改這裡) *****/
     const LIFF_ID = "2001467446-KNVd49W2";
     
