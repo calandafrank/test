@@ -5,7 +5,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>凝聚｜首次體驗預約｜回饋表單</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link rel="preconnect" href="https://static.line-scdn.net">
+  <link rel="preconnect" href="https://cicostudio.fillout.com">
+  <script>
+    if (window.self !== window.top) { window.top.location.href = window.location.href; }
+  </script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
 
   <style>
     /* 基礎設定 */
@@ -56,7 +61,7 @@
       }
     }
 
-    /* 2. 登入引導頁 (共用樣式) */
+    /* 2. 登入引導頁 (桌機與手機未登入者通用) */
     .icon-box {
       width: 100px;
       height: 100px;
@@ -113,22 +118,7 @@
       transform: scale(0.98);
     }
 
-    /* 3. 桌機 QR Code 畫面 */
-    .qr-box {
-      background: white;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-      margin-bottom: 24px;
-    }
-
-    .qr-box img {
-      width: 200px;
-      height: 200px;
-      display: block;
-    }
-
-    /* 4. 發送成功畫面 */
+    /* 3. 發送成功畫面 */
     #successScreen {
       color: #1e293b;
     }
@@ -151,7 +141,7 @@
       fill: white;
     }
 
-    /* 5. 表單 Iframe */
+    /* 4. 表單 Iframe */
     #filloutFrame {
       position: fixed;
       top: 0;
@@ -168,12 +158,11 @@
 
 <body>
 
-  <div id="loadingScreen" class="container" style="display: flex;">
+  <div id="loadingScreen" class="container">
     <div class="spinner"></div>
     <div id="loadingText">資料讀取中...</div>
   </div>
 
-  <!-- 手機版未登入引導 -->
   <div id="loginLanding" class="container">
     <div class="icon-box">
       <svg viewBox="0 0 24 24">
@@ -182,17 +171,8 @@
       </svg>
     </div>
     <h1>首次體驗預約</h1>
-    <p>請點擊下方按鈕開啟 LINE</p>
+    <p>若無自動跳轉，請點擊下方按鈕。</p>
     <button id="loginBtn" class="btn-main">前往 LINE 預約</button>
-  </div>
-
-  <!-- 桌機版 QR Code 引導 -->
-  <div id="desktopLanding" class="container">
-    <div class="qr-box">
-      <img id="qrImage" src="" alt="Scan QR Code" />
-    </div>
-    <h1>請使用手機掃描</h1>
-    <p>此表單需要透過手機上的 LINE app 填寫<br>請開啟相機掃描上方條碼</p>
   </div>
 
   <div id="successScreen" class="container">
@@ -209,10 +189,7 @@
   <iframe id="filloutFrame" title="表單"></iframe>
 
   <script>
-    /* 【修正 1】破框程式碼：防止 Fillout 在 iframe 內轉址導致卡死 */
-    if (window.self !== window.top) {
-      window.top.location.href = window.location.href;
-    }
+
     /***** 設定區域 (請務必修改這裡) *****/
     const LIFF_ID = "2001467446-KNVd49W2";
 
@@ -227,25 +204,21 @@
     const loadingScreen = document.getElementById('loadingScreen');
     const loadingText = document.getElementById('loadingText');
     const loginLanding = document.getElementById('loginLanding');
-    const desktopLanding = document.getElementById('desktopLanding');
     const successScreen = document.getElementById('successScreen');
     const iframe = document.getElementById('filloutFrame');
     const loginBtn = document.getElementById('loginBtn');
-    const qrImage = document.getElementById('qrImage');
 
     // 狀態切換管理
     function showState(state) {
       // 隱藏全部
       loadingScreen.style.display = 'none';
       loginLanding.style.display = 'none';
-      desktopLanding.style.display = 'none';
       successScreen.style.display = 'none';
       iframe.style.display = 'none';
 
       // 顯示指定區塊
       if (state === 'loading') loadingScreen.style.display = 'flex';
       if (state === 'landing') loginLanding.style.display = 'flex';
-      if (state === 'desktop') desktopLanding.style.display = 'flex';
       if (state === 'success') successScreen.style.display = 'flex';
       if (state === 'form') iframe.style.display = 'block';
     }
@@ -255,40 +228,29 @@
       loadingText.innerText = "資料傳送中...";
       showState('loading');
 
-      // 1. 抓取參數 (對應 Fillout 轉址設定)
-      const name = params.get('name') || "";
-      const phone = params.get('phone') || "";
-      const location = params.get('location') || "";
-      const datetime = params.get('datetime') || "";
-      const referer = params.get('referer') || "無";
-      const promocamp = params.get('promocamp') || "無";
-      const promocamp = params.get('trainer') || "";
+      // 1. 抓取參數
+      const data = {
+        name: params.get('name') || "",
+        phone: params.get('phone') || "",
+        location: params.get('location') || "",
+        datetime: params.get('datetime') || "",
+        referer: params.get('referer') || "無",
+        promocamp: params.get('promocamp') || "無"
+      };
 
       // 2. 組合訊息內容
-      const messageText = `【首次體驗預約資料】\n小編會盡快和您確認預約時段～\n\n．姓名： ${name}\n．電話： ${phone}\n．門市： ${location}\n．希望日期／時段： ${datetime}\n．訓練師偏好： ${trainer}\n．介紹人： ${referer}\n．活動／優惠： ${promocamp}`;
+      const messageText = `【首次體驗預約資料】\n小編會盡快和您確認預約時段～\n\n．姓名： ${data.name}\n．電話： ${data.phone}\n．門市： ${data.location}\n．希望日期／時段： ${data.datetime}\n．介紹人： ${data.referer}\n．活動／優惠： ${data.promocamp}`;
 
       try {
-        // 3. 嘗試使用 LIFF 隱形發送 (僅限 LINE App 內有效)
-        if (!liff.isInClient()) {
-          throw new Error("外部瀏覽器無法使用 sendMessages");
-        }
-
+        // 3. 嘗試使用 LIFF 隱形發送
+        if (!liff.isInClient()) throw new Error("外部瀏覽器無法使用 sendMessages");
         await liff.sendMessages([{ type: 'text', text: messageText }]);
-
-        // 發送成功
         showState('success');
         setTimeout(() => liff.closeWindow(), 3000);
-
       } catch (err) {
-        console.log('自動發送失敗，改用備案:', err);
-
-        // 4. 備案：轉址到聊天室 (適用於 Chrome/Safari/電腦)
-        // 這會喚起 LINE App 並將文字帶入輸入框
-        const encodedText = encodeURIComponent(messageText);
-        const oaUrl = `https://line.me/R/oaMessage/${LINE_OA_ID}/?${encodedText}`;
-
-        // 執行轉址
-        window.location.href = oaUrl;
+        console.warn('自動發送失敗，改用備案:', err);
+        // 4. 備案：轉址到聊天室
+        window.location.href = `https://line.me/R/oaMessage/${LINE_OA_ID}/?${encodeURIComponent(messageText)}`;
       }
     }
 
@@ -309,25 +271,14 @@
 
     // 主程式入口
     async function main() {
-      // 確保初始狀態為載入中
-      showState('loading');
-
-      // 設定載入超時 (5秒) - 防止 LIFF SDK 卡住
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("LIFF_INIT_TIMEOUT")), 5000);
-      });
-
       try {
-        // 使用 Race: 誰先完成就用誰 (LIFF Init 或是 Timeout)
-        await Promise.race([
-          liff.init({ liffId: LIFF_ID }),
-          timeoutPromise
-        ]);
+        await liff.init({ liffId: LIFF_ID });
 
         // A. 檢查是否為填單完成回傳 (URL 帶有 action=submit_done)
         const params = new URLSearchParams(window.location.search);
         if (params.get('action') === 'submit_done') {
           if (!liff.isLoggedIn()) {
+            // 若意外未登入，先登入以利後續發送 (通常不會發生)
             liff.login({ redirectUri: window.location.href });
             return;
           }
@@ -335,64 +286,29 @@
           return;
         }
 
-        // B. 平台判斷 logic fix
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isInClient = liff.isInClient();
-
-        // 如果是外部瀏覽器 (非 LINE App 內)
-        if (!isInClient) {
-          // 如果是桌機 -> 顯示 QR Code 引導手機掃描
-          if (!isMobile) {
-            const currentUrl = window.location.href;
-            const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentUrl)}`;
-            qrImage.src = qrApi;
-            showState('desktop');
-            return;
-          }
-
-          // 如果是手機瀏覽器且未登入 -> 顯示登入引導頁
-          if (!liff.isLoggedIn()) {
-            showState('landing');
-            loginBtn.onclick = triggerLogin;
-            return;
-          }
-        }
-
-        // C. 正常流程 (LINE App 內 或 手機瀏覽器已登入)
+        // B. 正常流程：檢查登入狀態
         if (liff.isLoggedIn()) {
+          // 已登入 (LINE 內或 Web 授權後) -> 直接顯示表單
           const profile = await liff.getProfile();
           loadForm(profile.userId);
           return;
         }
 
-        // D. 萬一在 LINE App 內卻沒登入
-        if (isInClient && !liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
-
-        // E. 最後防呆
+        // C. 未登入 (外部瀏覽器/桌機) -> 顯示登入引導頁
+        // 隱藏 Loading，顯示按鈕
         showState('landing');
         loginBtn.onclick = triggerLogin;
 
       } catch (err) {
         console.error('LIFF Init Error:', err);
-
-        // 判斷是否為超時
-        if (err.message === "LIFF_INIT_TIMEOUT") {
-          console.warn("LIFF Init Timeout - Force loading form");
-          // 超時不顯示 Alert，直接進入表單 (體驗較好)
-          loadForm("");
-        } else {
-          // 其他 LIFF 錯誤顯示詳細訊息，方便除錯
-          alert(`系統初始化失敗: ${err.message || 'Unknown Error'} (${err.code || 'N/A'})`);
-          loadForm("");
-        }
+        // 初始化失敗時的降級處理 -> 直接開表單
+        alert("系統連線異常，將直接開啟表單");
+        loadForm("");
       }
     }
 
     // 啟動
-    main();
+    document.addEventListener('DOMContentLoaded', main);
   </script>
 </body>
 
