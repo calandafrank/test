@@ -312,8 +312,17 @@
       // 確保初始狀態為載入中
       showState('loading');
 
+      // 設定載入超時 (5秒) - 防止 LIFF SDK 卡住
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("LIFF_INIT_TIMEOUT")), 5000);
+      });
+
       try {
-        await liff.init({ liffId: LIFF_ID });
+        // 使用 Race: 誰先完成就用誰 (LIFF Init 或是 Timeout)
+        await Promise.race([
+          liff.init({ liffId: LIFF_ID }),
+          timeoutPromise
+        ]);
 
         // A. 檢查是否為填單完成回傳 (URL 帶有 action=submit_done)
         const params = new URLSearchParams(window.location.search);
@@ -327,8 +336,6 @@
         }
 
         // B. 平台判斷 logic fix
-        // 修正: liff.getOS() === 'web' 包含所有外部瀏覽器 (手機/桌機)
-        // 需額外判斷是否為手機裝置
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isInClient = liff.isInClient();
 
@@ -358,21 +365,29 @@
           return;
         }
 
-        // D. 萬一在 LINE App 內卻沒登入 (極少見，通常 liff.init 會自動處理)
-        // 為了保險起見，顯示登入引導或直接 triggerLogin
+        // D. 萬一在 LINE App 內卻沒登入
         if (isInClient && !liff.isLoggedIn()) {
           liff.login();
           return;
         }
 
-        // E. 最後防呆 (未預期的狀態)
+        // E. 最後防呆
         showState('landing');
         loginBtn.onclick = triggerLogin;
 
       } catch (err) {
         console.error('LIFF Init Error:', err);
-        alert("系統初始化失敗，將嘗試直接開啟表單");
-        loadForm("");
+
+        // 判斷是否為超時
+        if (err.message === "LIFF_INIT_TIMEOUT") {
+          console.warn("LIFF Init Timeout - Force loading form");
+          // 超時不顯示 Alert，直接進入表單 (體驗較好)
+          loadForm("");
+        } else {
+          // 其他 LIFF 錯誤顯示詳細訊息，方便除錯
+          alert(`系統初始化失敗: ${err.message || 'Unknown Error'} (${err.code || 'N/A'})`);
+          loadForm("");
+        }
       }
     }
 
