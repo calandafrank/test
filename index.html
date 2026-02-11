@@ -164,15 +164,13 @@
   </div>
 
   <div id="loginLanding" class="container">
-    <div class="icon-box">
-      <svg viewBox="0 0 24 24">
-        <path
-          d="M21.6 11.2c0-4.6-4.3-8.4-9.6-8.4S2.4 6.6 2.4 11.2c0 4.1 3.6 7.6 8.4 8.2v0.1l-1.2 3.8c-0.1 0.4 0.2 0.7 0.5 0.7 0.2 0 0.3-0.1 0.4-0.1l4.9-3.4h0.1c3.5-0.6 6.1-4.1 6.1-8.3z" />
-      </svg>
-    </div>
+    <!-- QR Code Image -->
+    <img src="https://qr-official.line.me/gs/M_biu5388t_GW.png?oat__id=6356535&oat_content=q&openExternalBrowser=1"
+      alt="加入好友" style="width: 200px; height: 200px; margin-bottom: 24px;">
     <h1>首次體驗預約</h1>
-    <p>若無自動跳轉，請點擊下方按鈕。</p>
-    <button id="loginBtn" class="btn-main">前往 LINE 預約</button>
+    <p>請加入官方 LINE 帳號進行預約</p>
+    <a href="https://lin.ee/5bVtI07?oat__id=6356535&oat_content=l&openExternalBrowser=1" class="btn-main"
+      style="text-align:center; box-sizing:border-box;">加入官方 LINE</a>
   </div>
 
   <div id="successScreen" class="container">
@@ -206,7 +204,6 @@
     const loginLanding = document.getElementById('loginLanding');
     const successScreen = document.getElementById('successScreen');
     const iframe = document.getElementById('filloutFrame');
-    const loginBtn = document.getElementById('loginBtn');
 
     // 狀態切換管理
     function showState(state) {
@@ -286,18 +283,21 @@
           return;
         }
 
-        // B. 正常流程：檢查登入狀態
-        if (liff.isLoggedIn()) {
-          // 已登入 (LINE 內或 Web 授權後) -> 直接顯示表單
-          const profile = await liff.getProfile();
-          loadForm(profile.userId);
+        // B. 偵測並處理外部瀏覽器 (非 LINE 環境 -> 強制顯示加好友)
+        if (!liff.isInClient()) {
+          showState('landing');
           return;
         }
 
-        // C. 未登入 (外部瀏覽器/桌機) -> 顯示登入引導頁
-        // 隱藏 Loading，顯示按鈕
-        showState('landing');
-        loginBtn.onclick = triggerLogin;
+        // C. LINE 環境內：檢查登入狀態
+        if (liff.isLoggedIn()) {
+          // 已登入 -> 顯示表單
+          const profile = await liff.getProfile();
+          loadForm(profile.userId);
+        } else {
+          // 未登入 -> 自動執行登入 (LINE 內會自動轉跳)
+          liff.login({ redirectUri: window.location.href });
+        }
 
       } catch (err) {
         console.error('LIFF Init Error:', err);
