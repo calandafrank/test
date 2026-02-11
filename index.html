@@ -182,7 +182,7 @@
       </svg>
     </div>
     <h1>首次體驗預約</h1>
-    <p>為了確保預約資料能正確發送<br>請點擊下方按鈕開啟 LINE</p>
+    <p>請點擊下方按鈕開啟 LINE</p>
     <button id="loginBtn" class="btn-main">前往 LINE 預約</button>
   </div>
 
@@ -262,9 +262,10 @@
       const datetime = params.get('datetime') || "";
       const referer = params.get('referer') || "無";
       const promocamp = params.get('promocamp') || "無";
+      const promocamp = params.get('trainer') || "";
 
       // 2. 組合訊息內容
-      const messageText = `【首次體驗預約資料】\n小編會盡快和您確認預約時段～\n\n．姓名： ${name}\n．電話： ${phone}\n．門市： ${location}\n．希望日期／時段： ${datetime}\n．介紹人： ${referer}\n．活動／優惠： ${promocamp}`;
+      const messageText = `【首次體驗預約資料】\n小編會盡快和您確認預約時段～\n\n．姓名： ${name}\n．電話： ${phone}\n．門市： ${location}\n．希望日期／時段： ${datetime}\n．訓練師偏好： ${trainer}\n．介紹人： ${referer}\n．活動／優惠： ${promocamp}`;
 
       try {
         // 3. 嘗試使用 LIFF 隱形發送 (僅限 LINE App 內有效)
